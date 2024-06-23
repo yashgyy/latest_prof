@@ -1,0 +1,54 @@
+
+AMDuProfPcm Report
+
+System:,Family(0x19) Model(0x1) Stepping(0x2)
+Number of Sockets :,2
+Number of CCDs :,16
+Number of Cores :,48
+Number of Threads :,96
+SMT Enabled in HW:,True
+SMT Enabled by OS :,True
+Number of Threads sharing L3:,6
+
+CPU Topology:
+Socket, CCD, Core(s)
+0,0, 0 1 2 48 49 50
+0,1, 3 4 5 51 52 53
+0,2, 6 7 8 54 55 56
+0,3, 9 10 11 57 58 59
+0,4, 12 13 14 60 61 62
+0,5, 15 16 17 63 64 65
+0,6, 18 19 20 66 67 68
+0,7, 21 22 23 69 70 71
+1,8, 24 25 26 72 73 74
+1,9, 27 28 29 75 76 77
+1,10, 30 31 32 78 79 80
+1,11, 33 34 35 81 82 83
+1,12, 36 37 38 84 85 86
+1,13, 39 40 41 87 88 89
+1,14, 42 43 44 90 91 92
+1,15, 45 46 47 93 94 95
+
+Core P0 state frequency (MHz):,2800.000000
+Measured DF Frequency (MHz):,1231.558838
+Multiplex interval (ms):,0
+Version:,4.2.0
+
+Hypervisor Info:
+Hypervisor Enabled:,0
+
+Abbreviation :
+IPC    : Instructions Per CPU Cycle
+CPI    : CPU Cycles Per Instructions
+pti    : Per Thousand Instructions
+ptc    : Per Thousand CPU Cycles
+
+Profile Time: 2024/06/23 07:00:35:408
+L3 METRICS
+Metric,CCX-0,CCX-1,CCX-2,CCX-3,CCX-4,CCX-5,CCX-6,CCX-7,CCX-8,CCX-9,CCX-10,CCX-11,CCX-12,CCX-13,CCX-14,CCX-15
+L3 Access,5255040.00,7822200.00,230774.00,70622310.00,3114656.00,330040.00,264096.00,522399.00,5660784.00,345941.00,75555851.00,1136966.00,275439.00,205018.00,638397.00,804256.00
+L3 Miss,727535.00,356378.00,96239.00,21424584.00,338916.00,150395.00,118301.00,252909.00,384617.00,133711.00,20638905.00,283681.00,116735.00,92941.00,197757.00,212156.00
+L3 Miss %,13.84,4.56,41.70,30.34,10.88,45.57,44.79,48.41,6.79,38.65,27.32,24.95,42.38,45.33,30.98,26.38
+Ave L3 Miss Latency,386.99,483.39,959.73,1093.37,461.30,860.77,964.52,650.66,280.66,524.24,1085.20,353.09,551.49,541.56,394.32,545.13
+
+

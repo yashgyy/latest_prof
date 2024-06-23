@@ -1,0 +1,256 @@
+AMD Perfomance Counter Monitor
+AMDuProfPcm is a command-line tool to monitor CPU performance metrics of AMD processors.
+Usage: AMDuProfPcm [<COMMANDS>] [<OPTIONS>] -- <PROGRAM> [<ARGS>]
+
+COMMANDS
+ roofline                       Collect data required for generating roofline model.
+
+OPTIONS
+ -m <METRIC,..>                 Metrics to report.
+                                Supported METRIC's are - <dc | fp | hwpfdc | ipc | l1 | l2 | l3 | memory | swpfdc | tlb | xgmi>
+                                Note: These metrics are applicable only with the built-in config file.
+ -c <core|ccd|package=<n>       Collect from the specified core | ccd | package. Default is 'core=0'.
+                                If 'ccd' is specified:
+                                    core events will be collected from all the cores of this die.
+                                    l3 events will be collected from the first core of all the ccx's of this die.
+                                    df events will be collected from the first core of this die.
+                                If 'package' is specified:
+                                    core events will be collected from all the cores of this package.
+                                    l3 events will be collected from the first core of all the ccx's of this package.
+                                    df events will be collected from the first core of all the die's of this package.
+ -a                             Collect from all the cores. Note: Options -c and -a cannot be used together.
+ -i <config file>               User defined XML config file that specifies Core|L3|DF counters to monitor.
+                                Refer sample files at <install-dir>/bin/Data/Config/ dir for the format.
+                                Note: Options -i and -m cannot be used together. If option -i is used, all the events
+                                      mentioned in the user-defined config file will be collected.
+ -d <seconds>                   Profile duration to run.
+ -t <multiplex interval in ms>  Interval in which pmc count values will be read. Minimum is 16ms.
+ -k                             Prefix 'pkg' in package level counters. Available only for package level counters
+ -o <output file>               Output file name.
+ -D <dump file>                 Output file that contains the event count dump.
+ -p <n>                         Set precision of the metrics reported. Default is 2.
+ -P <pid>                       Set target pid to be profiled.
+ -q                             Hide CPU topology reported.
+ -r                             To force reset the MSRs.
+ -s                             Display time stamp in the time series report
+ -I <ms>                        Prints the metrics at regular interval. Enabled by default with 1000ms interval
+ -C                             Prints the cumulative metrics at the end of the profile duration. Otherwise, all the
+                                samples will be reported as timeseries data.
+ -A <system,package,ccd,core>
+                                Prints aggregated metrics at specified component level
+ -l                             List supported Raw PMU events.
+ -z <pmc-event>                 Print the name, description and available unit masks for the event.
+ -x <core-id,..>                Core affinity for launched application. Comma separated list of core-id's.
+ -f <util:n>                    Filter roofline data based on utilization. Applicable only with roofline command.
+                                Ex. -f util:90 will discard samples with less than 90% utilization.
+ -w <dir>                       Specify the working directory. Default will be the path of the launched application.
+ -n                             Print cpu numa topology.
+ -v                             Print version.
+ -h                             Print help.
+ -X                             Collect data using perf subsystem in non-root mode.
+
+PROGRAM                         The application to be launched before collecting the profile data.
+ARGS                            The list of arguments for the launch application.
+
+TOP COMMAND:
+    Top Command is used to monitor live performance.
+       AMDuProfPcm top [<OPTIONS>]
+
+    EXAMPLES:
+        1. Run the command and monitor ipc performance metrics and refresh in regular interval (1000ms) in console
+        # AMDuProfPcm top -m ipc
+
+        2. Run the command and monitor memory metrics and refresh in regular interval (1500ms) in console
+        # AMDuProfPcm top -m memory -I 1500
+
+MONITORING WITHOUT ROOT PRIVILEGES:
+    The option -X can be used to monitor the metrics without having the dependency on "msr" module and root access.
+    This option can be used to collect Core, L3 and DF PMC events on Zen based processors. Newer proceesors may require
+    latest kernels supporting those newer processor models.
+
+    EXAMPLES:
+    Timeseries monitoring of ipc of a benchmark. Aggregate metrics per thread.
+      $ AMDuProfPcm -X -m ipc -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Timeseries monitoring of ipc of a benchmark. Aggregate metrics per processor package.
+      $ AMDuProfPcm -X -m ipc -A package -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Timeseries monitoring of ipc of a benchmark. Aggregate metrics at the system level.
+      $ AMDuProfPcm -X -m ipc -A system -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Cumulative reporting of ipc metrics at the end of the benchmark execution.
+      $ AMDuProfPcm -X -m ipc -C -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Cumulative reporting of ipc metrics at the end of the benchmark execution. Aggregate metrics per processor package.
+      $ AMDuProfPcm -X -m ipc -C -A package -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Cumulative reporting of ipc metrics at the end of the benchmark execution. Aggregate metrics at system level.
+      $ AMDuProfPcm -X -m ipc -C -A system -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Timeseries monitoring of memory bandwidth reporting at package and memory channels level.
+      $ AMDuProfPcm -X -m memory -a -A system,package -o /tmp/mem.csv
+
+    Timeseries monitoring of level 1 and level 2 topdown metrics (pipeline utilization)
+      $ AMDuProfPcm -X -m topdown -A system -o /tmp/td.csv -- AMDTClassicMatMul-bin
+
+    Cumulative reporting of level 1 and level 2 topdown metrics (pipeline utilization)
+      $ AMDuProfPcm -X -m topdown -C -A system -o /tmp/td.csv -- AMDTClassicMatMul-bin
+
+    For better topdown results disable NMI watchdog. As root, run "echo 0 > /proc/sys/kernel/nmi_watchdog"
+
+ROOFLINE MODEL:
+        An easy to visualize performance model that can be used to characterize a benchmark or application on an architecture.
+    This performance model helps to identify whether a benchmark is memory-bound or compute-bound.
+    Following steps can be used to generate a roofline graph of an application.
+
+    To collect profile data
+       # AMDuProfPcm roofline -o /tmp/myapp-rl.csv -- <PROGRAM> [<ARGS>]
+
+    To collect data in non-root mode
+       $ AMDuProfPcm roofline -X -o /tmp/myapp-rl.csv -- <PROGRAM> [<ARGS>]
+
+    To plot roofline
+       $ AMDuProfModelling.py -i /tmp/myapp-rl.csv -o /tmp/
+
+    The above command will generate the roofline plot in a PDF file and save it in /tmp/ dir.
+    Run "AMDuProfModelling.py -h" for the options supported by this script.
+
+********
+EXAMPLES:
+  1. Run the command and collect ipc performance metrics and print in regular interval (1000ms) in console
+     # AMDuProfPcm -m ipc -c core=0 -- /usr/bin/taskset -c 0 AMDTClassicMatMul-bin
+
+  2. Collect ipc metrics from core 0 for duration of 10 seconds and in regular interval save profile data in a file
+     # AMDuProfPcm -m ipc -c core=0 -d 10 -o /tmp/perf-overview.csv
+
+  3. Collect memory bandwidth for all the memory channels and save the profile data in a file
+     # AMDuProfPcm -m memory -a -d 10 -o /tmp/perf-overview.csv
+
+root@moore:/opt/AMDuProf_4.2-850/bin/profilingdata# ../AMDuProfPcm -h > info.txt
+AMD Perfomance Counter Monitor
+AMDuProfPcm is a command-line tool to monitor CPU performance metrics of AMD processors.
+Usage: AMDuProfPcm [<COMMANDS>] [<OPTIONS>] -- <PROGRAM> [<ARGS>]
+
+COMMANDS
+ roofline                       Collect data required for generating roofline model.
+
+OPTIONS
+ -m <METRIC,..>                 Metrics to report.
+                                Supported METRIC's are - <dc | fp | hwpfdc | ipc | l1 | l2 | l3 | memory | swpfdc | tlb | xgmi>
+                                Note: These metrics are applicable only with the built-in config file.
+ -c <core|ccd|package=<n>       Collect from the specified core | ccd | package. Default is 'core=0'.
+                                If 'ccd' is specified:
+                                    core events will be collected from all the cores of this die.
+                                    l3 events will be collected from the first core of all the ccx's of this die.
+                                    df events will be collected from the first core of this die.
+                                If 'package' is specified:
+                                    core events will be collected from all the cores of this package.
+                                    l3 events will be collected from the first core of all the ccx's of this package.
+                                    df events will be collected from the first core of all the die's of this package.
+ -a                             Collect from all the cores. Note: Options -c and -a cannot be used together.
+ -i <config file>               User defined XML config file that specifies Core|L3|DF counters to monitor.
+                                Refer sample files at <install-dir>/bin/Data/Config/ dir for the format.
+                                Note: Options -i and -m cannot be used together. If option -i is used, all the events
+                                      mentioned in the user-defined config file will be collected.
+ -d <seconds>                   Profile duration to run.
+ -t <multiplex interval in ms>  Interval in which pmc count values will be read. Minimum is 16ms.
+ -k                             Prefix 'pkg' in package level counters. Available only for package level counters
+ -o <output file>               Output file name.
+ -D <dump file>                 Output file that contains the event count dump.
+ -p <n>                         Set precision of the metrics reported. Default is 2.
+ -P <pid>                       Set target pid to be profiled.
+ -q                             Hide CPU topology reported.
+ -r                             To force reset the MSRs.
+ -s                             Display time stamp in the time series report
+ -I <ms>                        Prints the metrics at regular interval. Enabled by default with 1000ms interval
+ -C                             Prints the cumulative metrics at the end of the profile duration. Otherwise, all the
+                                samples will be reported as timeseries data.
+ -A <system,package,ccd,core>
+                                Prints aggregated metrics at specified component level
+ -l                             List supported Raw PMU events.
+ -z <pmc-event>                 Print the name, description and available unit masks for the event.
+ -x <core-id,..>                Core affinity for launched application. Comma separated list of core-id's.
+ -f <util:n>                    Filter roofline data based on utilization. Applicable only with roofline command.
+                                Ex. -f util:90 will discard samples with less than 90% utilization.
+ -w <dir>                       Specify the working directory. Default will be the path of the launched application.
+ -n                             Print cpu numa topology.
+ -v                             Print version.
+ -h                             Print help.
+ -X                             Collect data using perf subsystem in non-root mode.
+
+PROGRAM                         The application to be launched before collecting the profile data.
+ARGS                            The list of arguments for the launch application.
+
+TOP COMMAND:
+    Top Command is used to monitor live performance.
+       AMDuProfPcm top [<OPTIONS>]
+
+    EXAMPLES:
+        1. Run the command and monitor ipc performance metrics and refresh in regular interval (1000ms) in console
+        # AMDuProfPcm top -m ipc
+
+        2. Run the command and monitor memory metrics and refresh in regular interval (1500ms) in console
+        # AMDuProfPcm top -m memory -I 1500
+
+MONITORING WITHOUT ROOT PRIVILEGES:
+    The option -X can be used to monitor the metrics without having the dependency on "msr" module and root access.
+    This option can be used to collect Core, L3 and DF PMC events on Zen based processors. Newer proceesors may require
+    latest kernels supporting those newer processor models.
+
+    EXAMPLES:
+    Timeseries monitoring of ipc of a benchmark. Aggregate metrics per thread.
+      $ AMDuProfPcm -X -m ipc -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Timeseries monitoring of ipc of a benchmark. Aggregate metrics per processor package.
+      $ AMDuProfPcm -X -m ipc -A package -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Timeseries monitoring of ipc of a benchmark. Aggregate metrics at the system level.
+      $ AMDuProfPcm -X -m ipc -A system -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Cumulative reporting of ipc metrics at the end of the benchmark execution.
+      $ AMDuProfPcm -X -m ipc -C -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Cumulative reporting of ipc metrics at the end of the benchmark execution. Aggregate metrics per processor package.
+      $ AMDuProfPcm -X -m ipc -C -A package -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Cumulative reporting of ipc metrics at the end of the benchmark execution. Aggregate metrics at system level.
+      $ AMDuProfPcm -X -m ipc -C -A system -o /tmp/pcm.csv -- AMDTClassicMatMul-bin
+
+    Timeseries monitoring of memory bandwidth reporting at package and memory channels level.
+      $ AMDuProfPcm -X -m memory -a -A system,package -o /tmp/mem.csv
+
+    Timeseries monitoring of level 1 and level 2 topdown metrics (pipeline utilization)
+      $ AMDuProfPcm -X -m topdown -A system -o /tmp/td.csv -- AMDTClassicMatMul-bin
+
+    Cumulative reporting of level 1 and level 2 topdown metrics (pipeline utilization)
+      $ AMDuProfPcm -X -m topdown -C -A system -o /tmp/td.csv -- AMDTClassicMatMul-bin
+
+    For better topdown results disable NMI watchdog. As root, run "echo 0 > /proc/sys/kernel/nmi_watchdog"
+
+ROOFLINE MODEL:
+        An easy to visualize performance model that can be used to characterize a benchmark or application on an architecture.
+    This performance model helps to identify whether a benchmark is memory-bound or compute-bound.
+    Following steps can be used to generate a roofline graph of an application.
+
+    To collect profile data
+       # AMDuProfPcm roofline -o /tmp/myapp-rl.csv -- <PROGRAM> [<ARGS>]
+
+    To collect data in non-root mode
+       $ AMDuProfPcm roofline -X -o /tmp/myapp-rl.csv -- <PROGRAM> [<ARGS>]
+
+    To plot roofline
+       $ AMDuProfModelling.py -i /tmp/myapp-rl.csv -o /tmp/
+
+    The above command will generate the roofline plot in a PDF file and save it in /tmp/ dir.
+    Run "AMDuProfModelling.py -h" for the options supported by this script.
+
+********
+EXAMPLES:
+  1. Run the command and collect ipc performance metrics and print in regular interval (1000ms) in console
+     # AMDuProfPcm -m ipc -c core=0 -- /usr/bin/taskset -c 0 AMDTClassicMatMul-bin
+
+  2. Collect ipc metrics from core 0 for duration of 10 seconds and in regular interval save profile data in a file
+     # AMDuProfPcm -m ipc -c core=0 -d 10 -o /tmp/perf-overview.csv
+
+  3. Collect memory bandwidth for all the memory channels and save the profile data in a file
+     # AMDuProfPcm -m memory -a -d 10 -o /tmp/perf-overview.csv
